@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>강화도 여행 경비 계산</title>
+  <style>
+    .result {
+      max-width: 800px;
+      margin: auto;
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    .h1,
+    .h2 {
+      color: #333;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    .total {
+      font-weight: bold;
+      color: #d9534f;
+    }
+
+    .note {
+      font-style: italic;
+      color: #999;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="result">
+    <h1 class="h1">여행 경비 계산</h1>
+    <br>
+    <h2>?일차 계획</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>순서</th>
+          <th>장소</th>
+          <th>주요 명소 및 즐길거리</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <h2 class="h2">남은 일차 추천</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>장소</th>
+          <th>주요 명소 및 즐길거리</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+        ...
+      </tbody>
+    </table>
+    <br>
+    <h2 class="h2">전체 여행 경비 계산</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>세부사항</th>
+          <th>비용</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>항공권</td>
+          <td>인천 - 강화 (편도)</td>
+          <td>약</td>
+        </tr>
+        <tr>
+          <td>렌트카</td>
+          <td>4일간 렌트</td>
+          <td>약 250,000원</td>
+        </tr>
+        <tr>
+          <td>숙박</td>
+          <td>4일 (펜션)</td>
+          <td>약</td>
+        </tr>
+        <tr>
+          <td>식비</td>
+          <td>4일간 1인당 약 30,000원/일</td>
+          <td>약</td>
+        </tr>
+        <tr>
+          <td>관광 및 활동</td>
+          <td>관광지 입장료, 체험 활동 등</td>
+          <td>약 </td>
+        </tr>
+        <tr>
+          <td>기타 경비</td>
+          <td>기념품, 예비 경비 등</td>
+          <td>약 </td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="total">
+          <td colspan="2">총 경비</td>
+          <td>약 <span id="total_price">1,610,000</span>원</td>
+        </tr>
+        <tr>
+          <td colspan="3" class="note">※ 실제 비용은 변동될 수 있습니다.</td>
+        </tr>
+      </tfoot>
+    </table>
+    <br>
+    <p class="total">예산한도와의 차이: 예산한도 - 총경비 = 원</p>
+  </div>
+  <p class="total">주의: 실제 비용은 항공권, 숙박, 렌트카 등의 예약 시기 및 상황에 따라 변동될 수 있으므로 실제 경비는 사전 조사를 통해 확정하시기 바랍니다.
+  <p>
+</body>
+
+</html>
