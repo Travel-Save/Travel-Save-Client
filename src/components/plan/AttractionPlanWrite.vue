@@ -131,7 +131,7 @@ watch(current, () => {
           <a-radio-group v-model:value="contentTypeId" v-for="item in items" :key="item.value">
             <a-radio-button :value="item.value">{{ item.title }}</a-radio-button>
           </a-radio-group>
-          <a-pagination v-if="totalCount !== 0" simple class="mt-3 w-100 text-center" v-model:current="current"
+          <a-pagination v-if="totalCount !== 0" simple class="mt-1 mb-1 w-100 text-center" v-model:current="current"
             :total="totalCount" :showSizeChanger="false" :defaultPageSize=12 />
           <AttractionItem v-for="attraction in planStore.attractionList" :attraction="attraction"
             :key="attraction.contentId" />

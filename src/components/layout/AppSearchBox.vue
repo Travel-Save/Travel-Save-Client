@@ -116,7 +116,7 @@ watch(
           } else {
             pagenationBySetAttractions({ item: data.attractions });
           }
-          if (Object.entries(map.value).length != 0) displayMarker(findObject(data, "item"));
+          if (Object.entries(map.value).length != 0) displayMarker(findObject(data, "attractions"));
         },
         (error) => {
           console.log(error);
