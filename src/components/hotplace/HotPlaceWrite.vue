@@ -26,7 +26,7 @@ const mapStore = useMapStore();
 const { addressLocation, getAddress } = mapStore;
 
 const isUseId = ref(false);
-const userAddress = ref("");
+const userAddress = ref({});
 
 const article = ref({
   title: "",
@@ -40,17 +40,6 @@ const thumbnail = ref("/src/assets/thumbnail-add.png");
 const files = ref([]);
 const uploadedFiles = ref([]);
 
-const addressValue = computed(() => {
-  const address = getAddress();
-  article.value.content2 = JSON.stringify(address);
-  if (!address.address) {
-    return "";
-  } else {
-    return address.address + ' (' + address.roadAddress + ')';
-  }
-})
-
-
 if (props.mode === "modify") {
   let { articleno } = route.params;
   console.log(articleno + "번글 얻어와서 수정할거야");
@@ -60,10 +49,9 @@ if (props.mode === "modify") {
       console.log(data);
       article.value = data;
       if (article.value.content2 !== undefined) {
-        console.log(JSON.parse(article.value.content2));
         article.value.content2 = { ...JSON.parse(article.value.content2) };
-        console.log(article.value.content2.address);
-        addressLocation(article.value.content2.address);
+        userAddress.value = article.value.content2;
+        addressLocation(userAddress.value.address);
       }
       if (article.value.thumbnail) {
         console.log("섬네일 불러오기");
@@ -191,19 +179,11 @@ function handleFileUpload(event) {
   console.log(files.value);
 }
 
-
-const keyword = ref("");
-
-
-onMounted(() => {
-  // resultAddress.value = '';
-});
 const getAddressLocation = () => {
-  
   new daum.Postcode({
     oncomplete: function (data) {
       console.log(data);
-          userAddress.value = `${data.address} (${data.jibunAddress})`
+          userAddress.value = {address : data.address, roadAddress : data.jibunAddress}
           article.value.content2 = JSON.stringify(userAddress.value);
           addressLocation(data.address);
         }
@@ -236,7 +216,7 @@ const handleFileChange = (event) => {
   <div class="container">
     <form @submit.prevent="getAddressLocation" class="input-group-form">
       <div class="input-group">
-        <input v-model="userAddress" type="text" class="form-control" placeholder="주소를 입력해주세요." @click="getAddressLocation"/>
+        <input v-model="userAddress.address" type="text" class="form-control" placeholder="주소를 입력해주세요." @click="getAddressLocation"/>
         <button type="submit" class="btn btn-dark">
           <span class="icon">
             <SearchOutlined />
@@ -253,8 +233,8 @@ const handleFileChange = (event) => {
       <div class="mb-3">
         <label for="title" class="form-label">제목 : </label>
         <input type="text" class="form-control" v-model="article.title" placeholder="제목..." />
-        <label for="title" class="form-label">주소 : </label>
-        <input type="text" class="form-control" v-model="userAddress" placeholder="주소..." readonly />
+        <label for="title" class="form-label mt-3">주소 : {{ userAddress.address }} ({{ userAddress.roadAddress }})</label>
+        <!-- <input type="text" class="form-control" v-model="userAddress" placeholder="주소..." readonly /> -->
       </div>
       <div class="mb-3">
         <label for="content" class="form-label">내용 : </label>

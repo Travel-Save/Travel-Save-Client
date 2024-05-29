@@ -33,12 +33,10 @@ export const useMapStore = defineStore("googleMap", () => {
 
   function displayMarker(attractions) {
     if (markers.value.length > 0) {
-      markers.value.forEach((marker) => marker.setMap(null));
+      clearMarker();
     }
-
     const positions = [];
     if (attractions.length > 0) {
-      clearMarker();
       attractions.forEach((attraction) => {
         let position = new google.maps.LatLng(attraction.mapy, attraction.mapx);
         positions.push(position);
@@ -78,6 +76,7 @@ export const useMapStore = defineStore("googleMap", () => {
   }
 
   function clearMarker() {
+    markers.value.forEach((marker) => marker.setMap(null));
     markers.value = [];
   }
 

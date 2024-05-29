@@ -204,7 +204,7 @@ const getArticleList = () => {
   console.log("서버에서 글목록 얻어오자!!!", param.value);
   if (param.value.type === "F") {
     listFavorite(
-      { ...param.value, userId: userInfo.value.id },
+      { ...param.value, userId: userInfo.value.id, type:"" },
       ({ data }) => {
         console.log(data);
         articles.value = data.articles;

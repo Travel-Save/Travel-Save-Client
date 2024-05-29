@@ -148,7 +148,7 @@ watch(current, () => {
         <!-- <KakaoMap id="mapContainer" /> -->
         
         <!-- Google Map -->
-        <GoogleMap id="map-container" style="width : 100%; height : 700px;"/>
+        <GoogleMap id="map-container"/>
         <div class="col">
           <a-float-button tooltip="SHOW PLAN" id="plan-toggle">
             <template #icon>
