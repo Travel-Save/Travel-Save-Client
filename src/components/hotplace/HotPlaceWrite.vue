@@ -1,6 +1,6 @@
 <script setup>
-import KakaoMap from "@/components/map/KakaoMap.vue";
-import { useKakaoMapStore } from "@/stores/map";
+// import KakaoMap from "@/components/map/KakaoMap.vue";
+import { useMapStore } from "@/stores/map";
 import { SearchOutlined } from "@ant-design/icons-vue";
 import { ref, watch, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -9,6 +9,7 @@ import { error, success } from "@/api/common";
 import Editor from "@tinymce/tinymce-vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
+import GoogleMap from "../map/GoogleMap.vue";
 const { VITE_VUE_API_URL, VITE_TINYMCE_API_KEY } = import.meta.env;
 
 const router = useRouter();
@@ -21,11 +22,11 @@ const props = defineProps({
 const boardType = "H";
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
-const kakaoMapStore = useKakaoMapStore();
-const { addressLocation, getAddress } = kakaoMapStore;
-const { resultAddress } = storeToRefs(kakaoMapStore);
+const mapStore = useMapStore();
+const { addressLocation, getAddress } = mapStore;
 
 const isUseId = ref(false);
+const userAddress = ref("");
 
 const article = ref({
   title: "",
@@ -121,7 +122,7 @@ watch(
   { immediate: true }
 );
 watch(
-  () => addressValue.value,
+  () => userAddress.value,
   (value) => {
     let len = value.length;
     if (len == 0 || len > 500) {
@@ -195,10 +196,18 @@ const keyword = ref("");
 
 
 onMounted(() => {
-  resultAddress.value = '';
+  // resultAddress.value = '';
 });
 const getAddressLocation = () => {
-  addressLocation(keyword.value);
+  
+  new daum.Postcode({
+    oncomplete: function (data) {
+      console.log(data);
+          userAddress.value = `${data.address} (${data.jibunAddress})`
+          article.value.content2 = JSON.stringify(userAddress.value);
+          addressLocation(data.address);
+        }
+    }).open();
 };
 
 const fileInput = ref(null);
@@ -227,7 +236,7 @@ const handleFileChange = (event) => {
   <div class="container">
     <form @submit.prevent="getAddressLocation" class="input-group-form">
       <div class="input-group">
-        <input v-model="keyword" type="text" class="form-control" placeholder="주소를 입력해주세요." />
+        <input v-model="userAddress" type="text" class="form-control" placeholder="주소를 입력해주세요." @click="getAddressLocation"/>
         <button type="submit" class="btn btn-dark">
           <span class="icon">
             <SearchOutlined />
@@ -237,7 +246,7 @@ const handleFileChange = (event) => {
     </form>
     <div class="row image">
       <img class="thumbnail col-auto" :src="thumbnail" alt="Tumbnail" @click="selectImage" />
-      <KakaoMap id="map-container" class="col" />
+      <GoogleMap id="map-container" class="col" />
     </div>
     <form @submit.prevent="onSubmit" enctype="multipart/form-data">
       <input type="file" ref="fileInput" @change="handleFileChange" style="display: none" />
@@ -245,7 +254,7 @@ const handleFileChange = (event) => {
         <label for="title" class="form-label">제목 : </label>
         <input type="text" class="form-control" v-model="article.title" placeholder="제목..." />
         <label for="title" class="form-label">주소 : </label>
-        <input type="text" class="form-control" :value="addressValue" placeholder="주소..." readonly />
+        <input type="text" class="form-control" v-model="userAddress" placeholder="주소..." readonly />
       </div>
       <div class="mb-3">
         <label for="content" class="form-label">내용 : </label>

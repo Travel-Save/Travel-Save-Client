@@ -1,5 +1,5 @@
 <script setup>
-import KakaoMap from "@/components/map/KakaoMap.vue";
+// import KakaoMap from "@/components/map/KakaoMap.vue";
 import AppSearchBox from "@/components/layout/AppSearchBox.vue";
 import AttractionItem from "@/components/attraction/item/AttractionItem.vue";
 import AttractionDayForm from "@/components/plan/item/AttractionDayForm.vue";
@@ -9,9 +9,12 @@ import BoardWrite from "../board/BoardWrite.vue";
 import {
   UpSquareOutlined,
   DownSquareOutlined,
+  SoundTwoTone,
 } from "@ant-design/icons-vue";
 import { useAttractionFilterStore } from "@/stores/attractionFilter";
 import { storeToRefs } from "pinia";
+import GoogleMap from "@/components/map/GoogleMap.vue";
+
 
 /** stores */
 const attractionFilterStore = useAttractionFilterStore();
@@ -20,11 +23,13 @@ const planStore = usePlanStore();
 const { changeWriteComponent, totalCount } = storeToRefs(planStore);
 /** stores end */
 
+/** props */
 const props = defineProps({
   mode: String,
 })
-
 const { mode } = props;
+/** props end */
+
 
 const isHidePlan = ref(false);
 
@@ -131,7 +136,7 @@ watch(current, () => {
           <a-radio-group v-model:value="contentTypeId" v-for="item in items" :key="item.value">
             <a-radio-button :value="item.value">{{ item.title }}</a-radio-button>
           </a-radio-group>
-          <a-pagination v-if="totalCount !== 0" simple class="mt-1 mb-1 w-100 text-center" v-model:current="current"
+          <a-pagination v-if="totalCount !== 0" simple class="mt-3 w-100 text-center" v-model:current="current"
             :total="totalCount" :showSizeChanger="false" :defaultPageSize=12 />
           <AttractionItem v-for="attraction in planStore.attractionList" :attraction="attraction"
             :key="attraction.contentId" />
@@ -139,8 +144,11 @@ watch(current, () => {
           </div>
         </a-drawer>
 
-        <!-- 현재 화면의 나머지 너비, 최소 너비 400px-->
-        <KakaoMap id="mapContainer" />
+        <!-- 현재 화면의 나머지 너비, 최소 너비 400px - Kakao Map-->
+        <!-- <KakaoMap id="mapContainer" /> -->
+        
+        <!-- Google Map -->
+        <GoogleMap id="map-container" style="width : 100%; height : 700px;"/>
         <div class="col">
           <a-float-button tooltip="SHOW PLAN" id="plan-toggle">
             <template #icon>
@@ -185,7 +193,7 @@ watch(current, () => {
 }
 
 /* searchContainer 및 mapContainer에 대한 추가 스타일링 */
-#mapContainer {
+#map-container {
   position: relative;
   min-width: 400px;
   height: 86vh;
