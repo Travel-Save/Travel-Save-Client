@@ -1,21 +1,21 @@
 <script setup>
-import { onMounted } from "vue";
-import { useKakaoMapStore } from "@/stores/map";
+// import { onMounted } from "vue";
+// import { useKakaoMapStore } from "@/stores/map";
 
-const store = useKakaoMapStore();
+// const store = useKakaoMapStore();
 
-const emit = defineEmits(["mapMounted"]);
-onMounted(() => {
-  store.initMap(document.getElementById("map"));
+// const emit = defineEmits(["mapMounted"]);
+// onMounted(() => {
+//   store.initMap(document.getElementById("map"));
 
-  emit("mapMounted");
-});
+//   emit("mapMounted");
+// });
 
 </script>
 <template>
-  <div>
+  <!-- <div>
     <div id="map"></div>
-  </div>
+  </div> -->
 </template>
 
 <style scoped>

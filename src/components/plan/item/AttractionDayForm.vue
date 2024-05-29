@@ -2,11 +2,11 @@
 import { ref, onMounted, watch } from "vue";
 import AttractionUserPlan from "@/components/plan/item/AttractionUserPlan.vue";
 import { usePlanStore } from "@/stores/plan";
-import { useKakaoMapStore } from "@/stores/map";
+import { useMapStore } from "@/stores/map";
 import { storeToRefs } from "pinia";
 
 const planStore = usePlanStore();
-const mapStore = useKakaoMapStore();
+const mapStore = useMapStore();
 const { selectAttraction } = storeToRefs(mapStore);
 const { userPlans, activeTab } = storeToRefs(planStore);
 const { addLine } = mapStore;
