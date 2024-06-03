@@ -31,7 +31,6 @@ const { infinityScrollPageNo, contentTypeId, areaCode, sigunguCode } = storeToRe
 const { setSidoConfig, getCondition, setAreaBasedConfig, setKeywordConfig } = attractionFilterStore;
 
 const mapStore = useMapStore();
-const { map } = storeToRefs(mapStore);
 const { displayMarker } = mapStore;
 
 
@@ -71,7 +70,7 @@ const submitSearchBox = () => {
         console.log(data);
         if (props.mode === 'paging') totalCount.value = data.response.body.totalCount;
         pagenationBySetAttractions({ data });
-        if (Object.entries(map.value).length != 0) displayMarker(findObject(data, "item"));
+        displayMarker(findObject(data, "item"));
       },
       (err) => {
         error({ message: "검색결과가 없습니다." });

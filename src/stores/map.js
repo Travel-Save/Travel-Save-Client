@@ -4,52 +4,55 @@ import { usePlanStore } from "./plan";
 import Swal from "sweetalert2";
 
 export const useMapStore = defineStore("googleMap", () => {
-  const map = ref({});
+  const { VITE_GOOGLE_MAP_ID } = import.meta.env
+  let map;
   const markers = ref([]);
   const planStore = usePlanStore();
-  const polyline = ref(null);
+  let polyline;
   const selectAttraction = ref({});
   var marker = null;
   const resultAddress = ref({});
-  const geocoder = new google.maps.Geocoder();
 
-  function initMap(elMap) {
-    const options = {
+  //지도 객체를 등록합니다.
+  //지도 객체는 반응형 관리 대상이 아니므로 initMap에서 선언합니다.
+  // await를 사용하지 않으면 Map is not a constructor 에러 발생
+  async function initMap(elMap) {
+    const { Map } = await google.maps.importLibrary("maps");
+
+    map = new Map(elMap, {
       center: { lat: 33.450701, lng: 126.570667 },
       zoom: 12,
-    };
-
-    //지도 객체를 등록합니다.
-    //지도 객체는 반응형 관리 대상이 아니므로 initMap에서 선언합니다.
-    map.value = new google.maps.Map(elMap, options);
+      mapId: VITE_GOOGLE_MAP_ID,
+    });
   }
 
   function changeSize(size) {
-    const container = map.value;
+    const container = map;
     container.style.width = `${size}px`;
     container.style.height = `${size}px`;
-    toRaw(map.value).relayout();
+    toRaw(map).relayout();
   }
 
-  function displayMarker(attractions) {
+  async function displayMarker(attractions) {
     if (markers.value.length > 0) {
       clearMarker();
     }
     const positions = [];
     if (attractions.length > 0) {
+      const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
       attractions.forEach((attraction) => {
-        let position = new google.maps.LatLng(attraction.mapy, attraction.mapx);
+        let position = { lat: Number(attraction.mapy), lng: Number(attraction.mapx) }
         positions.push(position);
-        let marker = new google.maps.Marker({
-          map: map.value,
+        let marker = new AdvancedMarkerElement({
+          map,
           position,
         });
+        console.log(marker.position)
         marker.addListener("click", function () {
           planStore.addPlan(attraction);
         });
         markers.value.push(marker);
       });
-
       bound(positions);
     }
   }
@@ -57,12 +60,12 @@ export const useMapStore = defineStore("googleMap", () => {
   function panTo(lat, lng, level) {
     // 이동할 위도 경도 위치를 생성합니다
     var moveLatLon = new google.maps.LatLng(lat, lng);
-    map.value.setZoom(level ? level : 15);
+    map.setZoom(level ? level : 15);
 
     console.log("pan to", moveLatLon);
     // 지도 중심을 부드럽게 이동시킵니다
     // 만약 이동할 거리가 지도 화면보다 크면 부드러운 효과 없이 이동합니다
-    map.value.panTo(moveLatLon);
+    map.panTo(moveLatLon);
   }
 
   function addMarker(marker) {
@@ -76,8 +79,9 @@ export const useMapStore = defineStore("googleMap", () => {
   }
 
   function clearMarker() {
-    markers.value.forEach((marker) => marker.setMap(null));
+    markers.value.forEach((marker) => marker.position = null);
     markers.value = [];
+    console.log(markers.value.length);
   }
 
   function addressLocation(address) {
@@ -88,7 +92,7 @@ export const useMapStore = defineStore("googleMap", () => {
         positionToAddress(markerPosition);
 
         marker = new google.maps.Marker({
-          map: map.value,
+          map,
           position: markerPosition,
           draggable: true
         });
@@ -106,6 +110,7 @@ export const useMapStore = defineStore("googleMap", () => {
   }
 
   function positionToAddress(position) {
+    let geocoder = new google.maps.services.Geocoder();
     geocoder.geocode({ 'location': position }, function (results, status) {
       if (status === 'OK') {
         if (results[0]) {
@@ -122,7 +127,7 @@ export const useMapStore = defineStore("googleMap", () => {
       }
     });
   }
-  // // 주소로 좌표를 검색합니다
+  // 주소로 좌표를 검색합니다
   // function addressLocation(address) {
   //   var geocoder = new google.maps.services.Geocoder();
   //   geocoder.addressSearch(address, function (result, status) {
@@ -135,7 +140,7 @@ export const useMapStore = defineStore("googleMap", () => {
 
   //       // 마커를 생성합니다
   //       marker = new google.maps.Marker({
-  //         map: toRaw(map.value),
+  //         map: toRaw(map),
   //         position: markerPosition,
   //         draggable: true, // 마커를 드래그 가능하게 설정합니다
   //       });
@@ -179,38 +184,38 @@ export const useMapStore = defineStore("googleMap", () => {
     return resultAddress.value;
   };
 
-  function addLine(userPlans) {
+  async function addLine(userPlans) {
     removeMarker();
-    // console.log(map.value);
-    if (polyline.value) polyline.value.setMap(null);
+    const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
+
+    if (polyline) polyline.setMap(null);
+
     // 선을 구성하는 좌표 배열입니다
     let linePath = [];
 
     userPlans.forEach((userPlan) => {
-      linePath.push(new google.maps.LatLng(userPlan.mapy, userPlan.mapx));
+      linePath.push({ lat: Number(userPlan.mapy), lng: Number(userPlan.mapx) });
     });
 
     linePath.forEach((position) => {
-      const marker = new google.maps.Marker({
-        map: toRaw(map.value),
+      const marker = new AdvancedMarkerElement({
+        map,
         position,
       });
       markers.value.push(marker);
     });
 
     // 지도에 표시할 선을 생성합니다
-    polyline.value = new google.maps.Polyline({
-      // map: map.value,
+    polyline = new google.maps.Polyline({
+      // map: map,
       path: linePath, // 선을 구성하는 좌표배열 입니다
       strokeWeight: 5, // 선의 두께 입니다
       strokeColor: "red", // 선의 색깔입니다
       strokeOpacity: 0.7, // 선의 불투명도 입니다 1에서 0 사이의 값이며 0에 가까울수록 투명합니다
       strokeStyle: "solid", // 선의 스타일입니다
     });
-
-    // console.log(polyline);
     // 지도에 선을 표시합니다
-    polyline.value.setMap(map.value);
+    polyline.setMap(map);
 
     // 마커들의 위치를 기반으로 지도의 영역을 결정
     bound(linePath);
@@ -223,7 +228,7 @@ export const useMapStore = defineStore("googleMap", () => {
       new google.maps.LatLngBounds()
     );
 
-    map.value.fitBounds(bounds);
+    map.fitBounds(bounds);
   };
 
   return {
