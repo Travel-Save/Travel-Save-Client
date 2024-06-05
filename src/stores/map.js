@@ -11,7 +11,7 @@ export const useMapStore = defineStore("googleMap", () => {
   let polyline;
   const selectAttraction = ref({});
   var marker = null;
-  const resultAddress = ref({});
+  const userAddressPosition = ref({});
 
   //지도 객체를 등록합니다.
   //지도 객체는 반응형 관리 대상이 아니므로 initMap에서 선언합니다.
@@ -42,12 +42,12 @@ export const useMapStore = defineStore("googleMap", () => {
       const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
       attractions.forEach((attraction) => {
         let position = { lat: Number(attraction.mapy), lng: Number(attraction.mapx) }
+        console.log(position)
         positions.push(position);
         let marker = new AdvancedMarkerElement({
           map,
           position,
         });
-        console.log(marker.position)
         marker.addListener("click", function () {
           planStore.addPlan(attraction);
         });
@@ -84,105 +84,30 @@ export const useMapStore = defineStore("googleMap", () => {
     console.log(markers.value.length);
   }
 
+  // 주소에 대한 좌표값 가져오기
   function addressLocation(address) {
-    geocoder.geocode({ 'address': address }, function (results, status) {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ 'address': address }, async function (results, status) {
+      const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
       if (status === 'OK') {
         if (marker) marker.setMap(null);
-        const markerPosition = new google.maps.LatLng(results[0].geometry.location.lat(), results[0].geometry.location.lng());
-        positionToAddress(markerPosition);
-
-        marker = new google.maps.Marker({
+        userAddressPosition.value = { lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng() };
+        marker = new AdvancedMarkerElement({
           map,
-          position: markerPosition,
-          draggable: true
+          position: userAddressPosition.value,
+          gmpDraggable: true,
         });
-
+        // 마커를 움직였을 때 움직인 마커의 좌표 갱신
         google.maps.event.addListener(marker, "dragend", function () {
-          const latLng = marker.getPosition();
-          positionToAddress(latLng);
+          userAddressPosition.value = { lat: marker.position.lat, lng: marker.position.lng };
+          console.log(userAddressPosition.value)
         });
-        console.log(markerPosition)
-        panTo(markerPosition.lat(), markerPosition.lng(), 15);
+        panTo(userAddressPosition.value.lat, userAddressPosition.value.lng, 15);
       } else {
         alert("Geocode was not successful for the following reason: " + status);
       }
     });
   }
-
-  function positionToAddress(position) {
-    let geocoder = new google.maps.services.Geocoder();
-    geocoder.geocode({ 'location': position }, function (results, status) {
-      if (status === 'OK') {
-        if (results[0]) {
-          const resultAddress = {
-            address: results[0].formatted_address,
-            roadAddress: results[0].formatted_address // Google Maps API does not differentiate road address
-          };
-          console.log("Converted coordinates to address:", resultAddress);
-        } else {
-          console.log("No results found");
-        }
-      } else {
-        console.log("Geocoder failed due to: " + status);
-      }
-    });
-  }
-  // 주소로 좌표를 검색합니다
-  // function addressLocation(address) {
-  //   var geocoder = new google.maps.services.Geocoder();
-  //   geocoder.addressSearch(address, function (result, status) {
-  //     // 정상적으로 검색이 완료됐으면
-  //     if (status === google.maps.services.Status.OK) {
-  //       if (marker) marker.setMap(null);
-  //       var markerPosition = new google.maps.LatLng(result[0].y, result[0].x);
-  //       // 검색 시 좌표를 주소로 변환
-  //       positionToAddress(markerPosition, geocoder);
-
-  //       // 마커를 생성합니다
-  //       marker = new google.maps.Marker({
-  //         map: toRaw(map),
-  //         position: markerPosition,
-  //         draggable: true, // 마커를 드래그 가능하게 설정합니다
-  //       });
-
-  //       // 마커의 dragend 이벤트 리스너를 추가합니다
-  //       google.maps.event.addListener(marker, "dragend", function () {
-  //         // 이동한 마커의 좌표값
-  //         var latLng = marker.getPosition();
-
-  //         // 좌표를 주소로 변환합니다
-  //         positionToAddress(latLng, geocoder);
-  //       });
-
-  //       // 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
-  //       panTo(result[0].y, result[0].x);
-  //     } else {
-  //       Swal.fire({
-  //         icon: "error",
-  //         title: "해당 주소를 찾지 못하였습니다.",
-  //         text: "다시 입력해주세요 :)",
-  //       });
-  //     }
-  //   });
-  // }
-
-  // const positionToAddress = (position, geocoder) => {
-  //   geocoder.coord2Address(position.getLng(), position.getLat(), function (result, status) {
-  //     if (status === google.maps.services.Status.OK) {
-  //       resultAddress.value = {
-  //         address: result[0].address.address_name,
-  //         roadAddress: result[0].road_address.address_name,
-  //       };
-  //       console.log("드래그된 좌표의 주소:", resultAddress.value);
-  //     } else {
-  //       console.log("주소 변환에 실패했습니다.");
-  //     }
-  //   });
-  // };
-
-  const getAddress = () => {
-    return resultAddress.value;
-  };
 
   async function addLine(userPlans) {
     removeMarker();
@@ -240,9 +165,8 @@ export const useMapStore = defineStore("googleMap", () => {
     addMarker,
     clearMarker,
     addressLocation,
-    getAddress,
     addLine,
-    resultAddress,
+    userAddressPosition,
     selectAttraction,
     markers,
   };

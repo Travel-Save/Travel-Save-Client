@@ -23,7 +23,8 @@ const boardType = "H";
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
 const mapStore = useMapStore();
-const { addressLocation, getAddress } = mapStore;
+const { addressLocation } = mapStore;
+const { userAddressPosition } = storeToRefs(mapStore);
 
 const isUseId = ref(false);
 const userAddress = ref({});
@@ -133,7 +134,7 @@ function onSubmit() {
 
 function writeArticle() {
   console.log("글등록하자!!", article.value);
-
+  article.value.content2 = JSON.stringify({ ...userAddress.value, mapy: userAddressPosition.value.lat, mapx: userAddressPosition.value.lng })
   registArticle(
     article.value,
     (response) => {
@@ -182,12 +183,10 @@ function handleFileUpload(event) {
 const getAddressLocation = () => {
   new daum.Postcode({
     oncomplete: function (data) {
-      console.log(data);
-          userAddress.value = {address : data.address, roadAddress : data.jibunAddress}
-          article.value.content2 = JSON.stringify(userAddress.value);
-          addressLocation(data.address);
-        }
-    }).open();
+      addressLocation(data.address);
+      userAddress.value = { address: data.address, roadAddress: data.jibunAddress}
+    },
+  }).open();
 };
 
 const fileInput = ref(null);

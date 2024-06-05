@@ -55,7 +55,9 @@ const getArticle = async () => {
       article.value.content2 = JSON.parse(article.value.content2);
       // TODO : PolyLine 과 같은 증상 (처음 들어오면 좌표가 안찍힘)
       if (article.value.type === "H") {
-        mapStore.addressLocation(article.value.content2.address);
+        // mapStore.addressLocation(article.value.content2.address);
+        console.log(article.value.content2);
+        mapStore.displayMarker([{ mapy: article.value.content2.mapy, mapx: article.value.content2.mapx}])
       }
       if (article.value.thumbnail) {
         console.log("섬네일 불러오기");
