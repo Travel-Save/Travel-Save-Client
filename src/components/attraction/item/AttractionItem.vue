@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
-import { useKakaoMapStore } from "@/stores/map";
+import { useMapStore } from "@/stores/map";
 import VBookmarkButton from "@/components/common/VBookmarkButton.vue";
 
 const route = useRoute();
@@ -13,7 +13,7 @@ const props = defineProps({
 });
 
 const loadingImg = ref("");
-const kakaoMapStore = useKakaoMapStore();
+const mapStore = useMapStore();
 
 
 const configList = [
@@ -103,7 +103,7 @@ const matchedConfig = computed(
       <div class="card-item w-100" style="width: 18rem" @click="moveDetail">
         <img v-if="route.path.includes('plan')" :src="attraction.firstimage" class="card-img-top" alt="..."
           style="object-fit: cover; height: 200px"
-          @click.stop="kakaoMapStore.panTo(attraction.mapy, attraction.mapx)" />
+          @click.stop="mapStore.panTo(attraction.mapy, attraction.mapx)" />
         <img v-else :src="attraction.firstimage" class="card-img-top" alt="..." style="object-fit: cover; height: 200px"
           @click.stop="moveDetail" />
         <hr />

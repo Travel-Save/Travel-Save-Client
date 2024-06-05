@@ -1,5 +1,5 @@
 <script setup>
-import KakaoMap from "@/components/map/KakaoMap.vue";
+// import KakaoMap from "@/components/map/KakaoMap.vue";
 import AttractionCultureItem from "./item/AttractionCultureItem.vue";
 import AttractionFestivalItem from "./item/AttractionFestivalItem.vue";
 import AttractionLeisureSportsItem from "./item/AttractionLeisureSportsItem.vue";
@@ -11,15 +11,17 @@ import { useRoute } from "vue-router";
 import { onMounted, ref, watch } from "vue";
 import { getAttractionDetail, getAttractionWith } from "@/api/attraction";
 import { useAttractionFilterStore } from "@/stores/attractionFilter";
-import { useKakaoMapStore } from "@/stores/map";
+import { useMapStore } from "@/stores/map";
 import { findObject } from "@/api/common";
 import { Navigation, Pagination, Thumbs } from 'swiper/modules';
 import VBookmarkButton from "../common/VBookmarkButton.vue";
+import { map } from "lodash";
+import GoogleMap from "../map/GoogleMap.vue";
 
 const route = useRoute();
 
-const kakaoMapStore = useKakaoMapStore();
-const { panTo, displayMarker } = kakaoMapStore;
+const mapStore = useMapStore();
+const { panTo, displayMarker } = mapStore;
 const attractionFilterStore = useAttractionFilterStore();
 const { getCondition, setDetailIntroConfig, setDetailCommonConfig, setDetailImageConfig, setDetailWithConfig } = attractionFilterStore;
 
@@ -191,7 +193,7 @@ const hasItems = (items) => {
                   <AttractionTourismItem class="accordion-body" v-if="route.params.contenttypeid === '12'"
                     :attraction="attractionInfo" />
                 </div>
-                <KakaoMap id="mapContainer" @map-mounted="mapMounted" />
+                <GoogleMap id="mapContainer" @map-mounted="mapMounted" />
               </div>
             </div>
           </div>

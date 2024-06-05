@@ -3,7 +3,8 @@ import { onMounted, ref, watch } from "vue";
 import { getGugunList, getAttractionList, listAttractionFavorite } from "@/api/attraction.js";
 import { SearchOutlined } from "@ant-design/icons-vue";
 import { usePlanStore } from "@/stores/plan";
-import { useKakaoMapStore } from "@/stores/map";
+// import { useKakaoMapStore } from "@/stores/map";
+import { useMapStore } from "@/stores/map"; 
 import { useAttractionFilterStore } from "@/stores/attractionFilter";
 import VSelect from "../common/VSelect.vue";
 import { storeToRefs } from "pinia";
@@ -29,9 +30,8 @@ const attractionFilterStore = useAttractionFilterStore();
 const { infinityScrollPageNo, contentTypeId, areaCode, sigunguCode } = storeToRefs(attractionFilterStore);
 const { setSidoConfig, getCondition, setAreaBasedConfig, setKeywordConfig } = attractionFilterStore;
 
-const kakaoMapStore = useKakaoMapStore();
-const { map } = storeToRefs(kakaoMapStore);
-const { displayMarker } = kakaoMapStore;
+const mapStore = useMapStore();
+const { displayMarker } = mapStore;
 
 
 const sidoSelectOption = ref([
@@ -70,7 +70,7 @@ const submitSearchBox = () => {
         console.log(data);
         if (props.mode === 'paging') totalCount.value = data.response.body.totalCount;
         pagenationBySetAttractions({ data });
-        if (Object.entries(map.value).length != 0) displayMarker(findObject(data, "item"));
+        displayMarker(findObject(data, "item"));
       },
       (err) => {
         error({ message: "검색결과가 없습니다." });
@@ -84,6 +84,7 @@ const attractionSize = ref(0);
 watch(
   [infinityScrollPageNo, attractionList],
   ([newVar1, newVar2], [oldVar1, oldVar2]) => {
+    console.log('pagenation')
     if (
       infinityScrollPageNo.value !== 1 &&
       newVar1 !== oldVar1 &&

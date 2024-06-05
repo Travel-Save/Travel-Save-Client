@@ -5,9 +5,10 @@ import { detailArticle, deleteArticle, getFiles, downloadFile, getThumbnail } fr
 import AttractionDayForm from "../plan/item/AttractionDayForm.vue";
 import { usePlanStore } from "@/stores/plan";
 import { useUserStore } from "@/stores/user";
-import { useKakaoMapStore } from "@/stores/map";
+import { useMapStore } from "@/stores/map";
 import { storeToRefs } from "pinia";
-import KakaoMap from "../map/KakaoMap.vue";
+// import KakaoMap from "../map/KakaoMap.vue";
+import GoogleMap from "../map/GoogleMap.vue";
 import VLikeButton from "../common/VLikeButton.vue";
 import OpenAI from "../openai/OpenAI.vue";
 
@@ -15,14 +16,14 @@ const { VITE_VUE_API_URL } = import.meta.env;
 
 const planStore = usePlanStore();
 const userStore = useUserStore();
-const kakaoMapStore = useKakaoMapStore();
+const mapStore = useMapStore();
 const route = useRoute();
 const router = useRouter();
 
 // const articleno = ref(route.params.articleno);
 const { articleno } = route.params;
 const { userInfo } = storeToRefs(userStore);
-const { addLine } = kakaoMapStore;
+const { addLine } = mapStore;
 
 const article = ref({
   content2: [],
@@ -54,7 +55,9 @@ const getArticle = async () => {
       article.value.content2 = JSON.parse(article.value.content2);
       // TODO : PolyLine 과 같은 증상 (처음 들어오면 좌표가 안찍힘)
       if (article.value.type === "H") {
-        kakaoMapStore.addressLocation(article.value.content2.address);
+        // mapStore.addressLocation(article.value.content2.address);
+        console.log(article.value.content2);
+        mapStore.displayMarker([{ mapy: article.value.content2.mapy, mapx: article.value.content2.mapx}])
       }
       if (article.value.thumbnail) {
         console.log("섬네일 불러오기");
@@ -163,7 +166,7 @@ const planModify = () => {
               <img :src="thumbnail" class="thumbnail" />
             </div>
             <div class="map-wrapper">
-              <KakaoMap id="map-container" />
+              <GoogleMap id="map-container" />
             </div>
           </div>
           <div class="divider mb-5"></div>
@@ -208,7 +211,7 @@ const planModify = () => {
             </div>
           </div>
           <div v-if="article.type === 'P'" class="map-plan-container">
-            <KakaoMap class="map-container" @map-mounted="mapMounted" />
+            <GoogleMap class="map-container" @map-mounted="mapMounted" />
 
             <div class="plan-container">
               <h4 class="text-center mt-3">나의 여행 계획</h4>

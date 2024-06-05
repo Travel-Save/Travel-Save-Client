@@ -3,53 +3,49 @@ import { defineStore } from "pinia";
 import { usePlanStore } from "./plan";
 import Swal from "sweetalert2";
 
-export const useKakaoMapStore = defineStore("kakaoMap", () => {
-  const map = ref({});
+export const useMapStore = defineStore("googleMap", () => {
+  const { VITE_GOOGLE_MAP_ID } = import.meta.env
+  let map;
   const markers = ref([]);
   const planStore = usePlanStore();
-  const polyline = ref(null);
+  let polyline;
   const selectAttraction = ref({});
-  function initMap(elMap) {
-    const options = {
-      center: new kakao.maps.LatLng(33.450701, 126.570667),
-      level: 5,
-    };
+  var marker = null;
+  const userAddressPosition = ref({});
 
-    //지도 객체를 등록합니다.
-    //지도 객체는 반응형 관리 대상이 아니므로 initMap에서 선언합니다.
-    map.value = new kakao.maps.Map(elMap, options);
+  //지도 객체를 등록합니다.
+  //지도 객체는 반응형 관리 대상이 아니므로 initMap에서 선언합니다.
+  // await를 사용하지 않으면 Map is not a constructor 에러 발생
+  async function initMap(elMap) {
+    const { Map } = await google.maps.importLibrary("maps");
 
-    // 일반 지도와 스카이뷰로 지도 타입을 전환할 수 있는 지도타입 컨트롤을 생성합니다
-    var mapTypeControl = new kakao.maps.MapTypeControl();
-    // 지도에 컨트롤을 추가해야 지도위에 표시됩니다
-    // kakao.maps.ControlPosition은 컨트롤이 표시될 위치를 정의하는데 TOPRIGHT는 오른쪽 위를 의미합니다
-    map.value.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
-
-    // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
-    var zoomControl = new kakao.maps.ZoomControl();
-    map.value.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+    map = new Map(elMap, {
+      center: { lat: 33.450701, lng: 126.570667 },
+      zoom: 12,
+      mapId: VITE_GOOGLE_MAP_ID,
+    });
   }
 
   function changeSize(size) {
-    const container = map.value;
+    const container = map;
     container.style.width = `${size}px`;
     container.style.height = `${size}px`;
-    toRaw(map.value).relayout();
+    toRaw(map).relayout();
   }
 
-  function displayMarker(attractions) {
+  async function displayMarker(attractions) {
     if (markers.value.length > 0) {
-      markers.value.forEach((marker) => marker.setMap(null));
-    }
-
-    const positions = [];
-    if (attractions.length > 0) { 
       clearMarker();
+    }
+    const positions = [];
+    if (attractions.length > 0) {
+      const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
       attractions.forEach((attraction) => {
-        let position = new kakao.maps.LatLng(attraction.mapy, attraction.mapx);
+        let position = { lat: Number(attraction.mapy), lng: Number(attraction.mapx) }
+        console.log(position)
         positions.push(position);
-        let marker = new kakao.maps.Marker({
-          map: map.value,
+        let marker = new AdvancedMarkerElement({
+          map,
           position,
         });
         marker.addListener("click", function () {
@@ -57,22 +53,19 @@ export const useKakaoMapStore = defineStore("kakaoMap", () => {
         });
         markers.value.push(marker);
       });
-  
       bound(positions);
     }
   }
-  
 
   function panTo(lat, lng, level) {
     // 이동할 위도 경도 위치를 생성합니다
-    var moveLatLon = new kakao.maps.LatLng(lat, lng);
-
-    map.value.setLevel(level ? level : 5);
+    var moveLatLon = new google.maps.LatLng(lat, lng);
+    map.setZoom(level ? level : 15);
 
     console.log("pan to", moveLatLon);
     // 지도 중심을 부드럽게 이동시킵니다
     // 만약 이동할 거리가 지도 화면보다 크면 부드러운 효과 없이 이동합니다
-    map.value.panTo(moveLatLon);
+    map.panTo(moveLatLon);
   }
 
   function addMarker(marker) {
@@ -86,100 +79,68 @@ export const useKakaoMapStore = defineStore("kakaoMap", () => {
   }
 
   function clearMarker() {
+    markers.value.forEach((marker) => marker.position = null);
     markers.value = [];
+    console.log(markers.value.length);
   }
 
-  var marker = null;
-  const resultAddress = ref({});
-  // 주소로 좌표를 검색합니다
+  // 주소에 대한 좌표값 가져오기
   function addressLocation(address) {
-    var geocoder = new kakao.maps.services.Geocoder();
-    geocoder.addressSearch(address, function (result, status) {
-      // 정상적으로 검색이 완료됐으면
-      if (status === kakao.maps.services.Status.OK) {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ 'address': address }, async function (results, status) {
+      const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
+      if (status === 'OK') {
         if (marker) marker.setMap(null);
-        var markerPosition = new kakao.maps.LatLng(result[0].y, result[0].x);
-        // 검색 시 좌표를 주소로 변환
-        positionToAddress(markerPosition, geocoder);
-
-        // 마커를 생성합니다
-        marker = new kakao.maps.Marker({
-          map: toRaw(map.value),
-          position: markerPosition,
-          draggable: true, // 마커를 드래그 가능하게 설정합니다
+        userAddressPosition.value = { lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng() };
+        marker = new AdvancedMarkerElement({
+          map,
+          position: userAddressPosition.value,
+          gmpDraggable: true,
         });
-
-        // 마커의 dragend 이벤트 리스너를 추가합니다
-        kakao.maps.event.addListener(marker, "dragend", function () {
-          // 이동한 마커의 좌표값
-          var latLng = marker.getPosition();
-
-          // 좌표를 주소로 변환합니다
-          positionToAddress(latLng, geocoder);
+        // 마커를 움직였을 때 움직인 마커의 좌표 갱신
+        google.maps.event.addListener(marker, "dragend", function () {
+          userAddressPosition.value = { lat: marker.position.lat, lng: marker.position.lng };
+          console.log(userAddressPosition.value)
         });
-
-        // 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
-        panTo(result[0].y, result[0].x);
+        panTo(userAddressPosition.value.lat, userAddressPosition.value.lng, 15);
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "해당 주소를 찾지 못하였습니다.",
-          text: "다시 입력해주세요 :)",
-        });
+        alert("Geocode was not successful for the following reason: " + status);
       }
     });
   }
 
-  const positionToAddress = (position, geocoder) => {
-    geocoder.coord2Address(position.getLng(), position.getLat(), function (result, status) {
-      if (status === kakao.maps.services.Status.OK) {
-        resultAddress.value = {
-          address: result[0].address.address_name,
-          roadAddress: result[0].road_address.address_name,
-        };
-        console.log("드래그된 좌표의 주소:", resultAddress.value);
-      } else {
-        console.log("주소 변환에 실패했습니다.");
-      }
-    });
-  };
-
-  const getAddress = () => {
-    return resultAddress.value;
-  };
-
-  function addLine(userPlans) {
+  async function addLine(userPlans) {
     removeMarker();
-    console.log(map.value);
-    if (polyline.value) polyline.value.setMap(null);
+    const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
+
+    if (polyline) polyline.setMap(null);
+
     // 선을 구성하는 좌표 배열입니다
     let linePath = [];
 
     userPlans.forEach((userPlan) => {
-      linePath.push(new kakao.maps.LatLng(userPlan.mapy, userPlan.mapx));
+      linePath.push({ lat: Number(userPlan.mapy), lng: Number(userPlan.mapx) });
     });
 
     linePath.forEach((position) => {
-      const marker = new kakao.maps.Marker({
-        map: toRaw(map.value),
+      const marker = new AdvancedMarkerElement({
+        map,
         position,
       });
       markers.value.push(marker);
     });
 
     // 지도에 표시할 선을 생성합니다
-    polyline.value = new kakao.maps.Polyline({
-      // map: map.value,
+    polyline = new google.maps.Polyline({
+      // map: map,
       path: linePath, // 선을 구성하는 좌표배열 입니다
       strokeWeight: 5, // 선의 두께 입니다
       strokeColor: "red", // 선의 색깔입니다
       strokeOpacity: 0.7, // 선의 불투명도 입니다 1에서 0 사이의 값이며 0에 가까울수록 투명합니다
       strokeStyle: "solid", // 선의 스타일입니다
     });
-
-    console.log(polyline);
     // 지도에 선을 표시합니다
-    polyline.value.setMap(map.value);
+    polyline.setMap(map);
 
     // 마커들의 위치를 기반으로 지도의 영역을 결정
     bound(linePath);
@@ -189,10 +150,10 @@ export const useKakaoMapStore = defineStore("kakaoMap", () => {
   const bound = (positions) => {
     const bounds = positions.reduce(
       (bounds, latlng) => bounds.extend(latlng),
-      new kakao.maps.LatLngBounds()
+      new google.maps.LatLngBounds()
     );
 
-    toRaw(map.value).setBounds(bounds);
+    map.fitBounds(bounds);
   };
 
   return {
@@ -204,9 +165,9 @@ export const useKakaoMapStore = defineStore("kakaoMap", () => {
     addMarker,
     clearMarker,
     addressLocation,
-    getAddress,
     addLine,
-    resultAddress,
+    userAddressPosition,
     selectAttraction,
+    markers,
   };
 });

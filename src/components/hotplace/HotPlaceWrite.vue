@@ -1,6 +1,6 @@
 <script setup>
-import KakaoMap from "@/components/map/KakaoMap.vue";
-import { useKakaoMapStore } from "@/stores/map";
+// import KakaoMap from "@/components/map/KakaoMap.vue";
+import { useMapStore } from "@/stores/map";
 import { SearchOutlined } from "@ant-design/icons-vue";
 import { ref, watch, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -9,6 +9,7 @@ import { error, success } from "@/api/common";
 import Editor from "@tinymce/tinymce-vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
+import GoogleMap from "../map/GoogleMap.vue";
 const { VITE_VUE_API_URL, VITE_TINYMCE_API_KEY } = import.meta.env;
 
 const router = useRouter();
@@ -21,11 +22,12 @@ const props = defineProps({
 const boardType = "H";
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
-const kakaoMapStore = useKakaoMapStore();
-const { addressLocation, getAddress } = kakaoMapStore;
-const { resultAddress } = storeToRefs(kakaoMapStore);
+const mapStore = useMapStore();
+const { addressLocation } = mapStore;
+const { userAddressPosition } = storeToRefs(mapStore);
 
 const isUseId = ref(false);
+const userAddress = ref({});
 
 const article = ref({
   title: "",
@@ -39,17 +41,6 @@ const thumbnail = ref("/src/assets/thumbnail-add.png");
 const files = ref([]);
 const uploadedFiles = ref([]);
 
-const addressValue = computed(() => {
-  const address = getAddress();
-  article.value.content2 = JSON.stringify(address);
-  if (!address.address) {
-    return "";
-  } else {
-    return address.address + ' (' + address.roadAddress + ')';
-  }
-})
-
-
 if (props.mode === "modify") {
   let { articleno } = route.params;
   console.log(articleno + "번글 얻어와서 수정할거야");
@@ -59,10 +50,9 @@ if (props.mode === "modify") {
       console.log(data);
       article.value = data;
       if (article.value.content2 !== undefined) {
-        console.log(JSON.parse(article.value.content2));
         article.value.content2 = { ...JSON.parse(article.value.content2) };
-        console.log(article.value.content2.address);
-        addressLocation(article.value.content2.address);
+        userAddress.value = article.value.content2;
+        addressLocation(userAddress.value.address);
       }
       if (article.value.thumbnail) {
         console.log("섬네일 불러오기");
@@ -121,7 +111,7 @@ watch(
   { immediate: true }
 );
 watch(
-  () => addressValue.value,
+  () => userAddress.value,
   (value) => {
     let len = value.length;
     if (len == 0 || len > 500) {
@@ -144,7 +134,7 @@ function onSubmit() {
 
 function writeArticle() {
   console.log("글등록하자!!", article.value);
-
+  article.value.content2 = JSON.stringify({ ...userAddress.value, mapy: userAddressPosition.value.lat, mapx: userAddressPosition.value.lng })
   registArticle(
     article.value,
     (response) => {
@@ -190,15 +180,13 @@ function handleFileUpload(event) {
   console.log(files.value);
 }
 
-
-const keyword = ref("");
-
-
-onMounted(() => {
-  resultAddress.value = '';
-});
 const getAddressLocation = () => {
-  addressLocation(keyword.value);
+  new daum.Postcode({
+    oncomplete: function (data) {
+      addressLocation(data.address);
+      userAddress.value = { address: data.address, roadAddress: data.jibunAddress}
+    },
+  }).open();
 };
 
 const fileInput = ref(null);
@@ -227,7 +215,7 @@ const handleFileChange = (event) => {
   <div class="container">
     <form @submit.prevent="getAddressLocation" class="input-group-form">
       <div class="input-group">
-        <input v-model="keyword" type="text" class="form-control" placeholder="주소를 입력해주세요." />
+        <input v-model="userAddress.address" type="text" class="form-control" placeholder="주소를 입력해주세요." @click="getAddressLocation"/>
         <button type="submit" class="btn btn-dark">
           <span class="icon">
             <SearchOutlined />
@@ -237,15 +225,15 @@ const handleFileChange = (event) => {
     </form>
     <div class="row image">
       <img class="thumbnail col-auto" :src="thumbnail" alt="Tumbnail" @click="selectImage" />
-      <KakaoMap id="map-container" class="col" />
+      <GoogleMap id="map-container" class="col" />
     </div>
     <form @submit.prevent="onSubmit" enctype="multipart/form-data">
       <input type="file" ref="fileInput" @change="handleFileChange" style="display: none" />
       <div class="mb-3">
         <label for="title" class="form-label">제목 : </label>
         <input type="text" class="form-control" v-model="article.title" placeholder="제목..." />
-        <label for="title" class="form-label">주소 : </label>
-        <input type="text" class="form-control" :value="addressValue" placeholder="주소..." readonly />
+        <label for="title" class="form-label mt-3">주소 : {{ userAddress.address }} ({{ userAddress.roadAddress }})</label>
+        <!-- <input type="text" class="form-control" v-model="userAddress" placeholder="주소..." readonly /> -->
       </div>
       <div class="mb-3">
         <label for="content" class="form-label">내용 : </label>

@@ -13,7 +13,7 @@ import { error, success } from "@/api/common";
 import Editor from "@tinymce/tinymce-vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
-import { useKakaoMapStore } from "@/stores/map";
+import { useMapStore } from "@/stores/map";
 const { VITE_TINYMCE_API_KEY, VITE_VUE_API_URL } = import.meta.env;
 
 const router = useRouter();
@@ -34,7 +34,7 @@ const props = defineProps({
 const userStore = useUserStore();
 const { userInfo, isLogin } = storeToRefs(userStore);
 
-const kakaoMapStore = useKakaoMapStore();
+const mapStore = useMapStore();
 
 const isUseId = ref(false);
 
@@ -184,7 +184,8 @@ function handleFileUpload(event) {
 }
 
 const addressValue = computed(() => {
-  const addr = kakaoMapStore.getAddress();
+  const addr = mapStore.getAddress();
+  console.log(addr)
   if (!addr.address) {
     return "";
   } else {
